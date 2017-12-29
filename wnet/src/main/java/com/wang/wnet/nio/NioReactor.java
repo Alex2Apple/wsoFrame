@@ -55,14 +55,11 @@ public class NioReactor implements Runnable {
 						}
 
 						int readyOps = key.readyOps();
-						if ((readyOps & SelectionKey.OP_READ) != 0) {
-							read((NioConnection) att);
-						} else if ((readyOps & SelectionKey.OP_WRITE) != 0) {
-							write((NioConnection) att);
-						} else {
+						if ((readyOps & (SelectionKey.OP_READ | SelectionKey.OP_WRITE)) == 0) {
 							key.cancel();
+							continue;
 						}
-
+						postNioWorker((AbstractNioConnection) att, readyOps);
 					}
 				} finally {
 					keys.clear();
@@ -72,7 +69,6 @@ public class NioReactor implements Runnable {
 				LOGGER.warn(getName(), e);
 			}
 		}
-
 	}
 
 	public String getName() {
@@ -97,8 +93,8 @@ public class NioReactor implements Runnable {
 	private void postNioWorker(AbstractNioConnection con, int readyOps) {
 		try {
 			NioWorker nioWorker = pickNioWorker(con);
-			if (con.getInHandlers().size() == 0) {
-				con.setInHandlers(nioWorker.getHandlers());
+			if (con.getHandlers().size() == 0) {
+				con.setHandlers(nioWorker.getHandlers());
 			}
 			WorkerMetaData meta = new WorkerMetaData(con, readyOps);
 			nioWorker.getReactorConQueue().offer(meta);
@@ -127,21 +123,4 @@ public class NioReactor implements Runnable {
 
 		return nioWorker;
 	}
-
-	private void read(NioConnection con) {
-		try {
-			con.read();
-		} catch (Exception e) {
-			LOGGER.warn("read connection error", e);
-		}
-	}
-
-	private void write(NioConnection con) {
-		try {
-			con.writeFromQueue();
-		} catch (IOException e) {
-			LOGGER.warn("write connection error", e);
-		}
-	}
-
 }

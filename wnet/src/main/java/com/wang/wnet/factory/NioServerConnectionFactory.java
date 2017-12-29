@@ -40,13 +40,13 @@ public class NioServerConnectionFactory {
 		// TODO NioWorker延迟加载
 		NioServerConnection con = new NioServerConnection(socketChannel);
 		con.setPacket(DefaultPacketFactory.getInstance().create());
-		con.setInHandlers(new ArrayList<>());
+		con.setHandlers(new ArrayList<>());
 
 		Socket socket = socketChannel.socket();
 		socket.setReceiveBufferSize(getRecvBufferSize());
 		socket.setSendBufferSize(getSendBufferSize());
 		socket.setTcpNoDelay(true);
-		socket.setKeepAlive(false);
+		socket.setKeepAlive(true);
 
 		con.setWriteBufferQueue(new BufferQueue());
 

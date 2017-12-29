@@ -75,7 +75,5 @@ public class NioWorker implements Runnable {
 				LOGGER.warn("worker error", e);
 			}
 		}
-
 	}
-
 }

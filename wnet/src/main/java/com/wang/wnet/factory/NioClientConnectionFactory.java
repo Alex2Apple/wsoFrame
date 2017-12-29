@@ -63,7 +63,7 @@ public class NioClientConnectionFactory {
 
 	public NioClientConnection make(String host, int port, NioConnector connector) throws IOException {
 		NioClientConnection conn = new NioClientConnection(openSocketChannel(), host, port);
-		conn.setInHandlers(new ArrayList<>());
+		conn.setHandlers(new ArrayList<>());
 		conn.setPacket(DefaultPacketFactory.getInstance().create());
 		conn.setWriteBufferQueue(new BufferQueue());
 		return conn;

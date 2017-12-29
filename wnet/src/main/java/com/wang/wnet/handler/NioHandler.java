@@ -7,7 +7,13 @@ package com.wang.wnet.handler;
 public interface NioHandler {
 
 	/**
-	 * @param data
+	 * @return true in, false out
 	 */
-	void handle(byte[] data);
+	boolean inOrOut();
+
+	/**
+	 * @param data
+	 * @return
+	 */
+	byte[] handle(byte[] data);
 }

@@ -42,7 +42,7 @@ public abstract class AbstractNioConnection implements NioConnection {
 	private Packet packet;
 	private int readBufferOffset;
 
-	private List<NioHandler> inHandlers;
+	private List<NioHandler> handlers;
 
 	private long lastReadTime;
 	private long lastWriteTime;
@@ -81,12 +81,12 @@ public abstract class AbstractNioConnection implements NioConnection {
 		this.readByteBuffer = readByteBuffer;
 	}
 
-	public List<NioHandler> getInHandlers() {
-		return inHandlers;
+	public List<NioHandler> getHandlers() {
+		return handlers;
 	}
 
-	public void setInHandlers(List<NioHandler> inHandlers) {
-		this.inHandlers = inHandlers;
+	public void setHandlers(List<NioHandler> handlers) {
+		this.handlers = handlers;
 	}
 
 	public Packet getPacket() {
@@ -148,7 +148,7 @@ public abstract class AbstractNioConnection implements NioConnection {
 				// 能够处理一个完整数据包
 				buffer.position(offset);
 				packet.make(buffer, length);
-				handle(packet.getBody());
+				handle(packet.getBody(), true);
 				packet.clear();
 				offset += length;
 				if (offset == position) {
@@ -263,8 +263,15 @@ public abstract class AbstractNioConnection implements NioConnection {
 	}
 
 	@Override
-	public void handle(byte[] data) {
-		// TOOD inHandler.handle(data);
+	public void handle(byte[] data, boolean in) {
+		if (getHandlers() == null || getHandlers().isEmpty()) {
+			return;
+		}
+		for (NioHandler handler : getHandlers()) {
+			if (handler.inOrOut() == in) {
+				data = handler.handle(data);
+			}
+		}
 	}
 
 	@Override

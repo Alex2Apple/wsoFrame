@@ -45,8 +45,9 @@ public interface NioConnection {
 
 	/**
 	 * @param data
+	 * @param in
 	 */
-	void handle(byte[] data);
+	void handle(byte[] data, boolean in);
 
 	/**
 	 * @param errorCode
