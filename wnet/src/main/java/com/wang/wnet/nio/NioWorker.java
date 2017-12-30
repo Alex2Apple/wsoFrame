@@ -63,12 +63,12 @@ public class NioWorker implements Runnable {
 	public void run() {
 		for (;;) {
 			try {
-				WorkerMetaData data = null;
-				if ((data = reactorConQueue.poll()) != null) {
-					if ((data.getReadyOps() & SelectionKey.OP_READ) != 0) {
-						data.getConnection().read();
-					} else if ((data.getReadyOps() & SelectionKey.OP_WRITE) != 0) {
-						data.getConnection().writeFromQueue();
+				WorkerMetaData meta = null;
+				if ((meta = reactorConQueue.poll()) != null) {
+					if ((meta.getReadyOps() & SelectionKey.OP_READ) != 0) {
+						meta.getConnection().read();
+					} else if ((meta.getReadyOps() & SelectionKey.OP_WRITE) != 0) {
+						meta.getConnection().writeByEvent();
 					}
 				}
 			} catch (Exception e) {

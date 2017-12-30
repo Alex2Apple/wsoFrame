@@ -70,6 +70,7 @@ public class NioConnector implements Runnable {
 		try {
 			if (c.finishConnect()) {
 				clearSelectionKey(key);
+				c.setReactor(reactor);
 				postRegister(c);
 				++hasConnected;
 			}

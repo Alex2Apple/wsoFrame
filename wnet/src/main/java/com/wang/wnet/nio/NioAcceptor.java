@@ -87,6 +87,7 @@ public class NioAcceptor implements Runnable {
 			++hasAccept;
 			socketChannel = serverSocketChannel.accept();
 			AbstractNioConnection con = connFactory.make(socketChannel);
+			con.setReactor(reactor);
 			postRegister(con);
 		} catch (Exception e) {
 			closeChannel(socketChannel);

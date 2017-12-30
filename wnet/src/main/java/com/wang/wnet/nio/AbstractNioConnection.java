@@ -39,6 +39,9 @@ public abstract class AbstractNioConnection implements NioConnection {
 	private SelectionKey selectionKey;
 	private Lock keyLock;
 
+	private NioReactor reactor;
+	private Lock reactorLock;
+
 	private Packet packet;
 	private int readBufferOffset;
 
@@ -51,6 +54,7 @@ public abstract class AbstractNioConnection implements NioConnection {
 		this.socketChannel = socketChannel;
 		this.isClosed = new AtomicBoolean(false);
 		this.keyLock = new ReentrantLock();
+		this.reactorLock = new ReentrantLock();
 	}
 
 	public NioWorker getNioWorker() {
@@ -81,6 +85,14 @@ public abstract class AbstractNioConnection implements NioConnection {
 		this.readByteBuffer = readByteBuffer;
 	}
 
+	public NioReactor getReactor() {
+		return reactor;
+	}
+
+	public void setReactor(NioReactor reactor) {
+		this.reactor = reactor;
+	}
+
 	public List<NioHandler> getHandlers() {
 		return handlers;
 	}
@@ -108,7 +120,7 @@ public abstract class AbstractNioConnection implements NioConnection {
 	@Override
 	public void register(Selector selector) throws IOException {
 		try {
-			this.selectionKey = socketChannel.register(selector, SelectionKey.OP_READ | SelectionKey.OP_WRITE, this);
+			this.selectionKey = socketChannel.register(selector, SelectionKey.OP_READ, this);
 			isRegisted = true;
 		} finally {
 			if (isClosed.get()) {
@@ -185,13 +197,48 @@ public abstract class AbstractNioConnection implements NioConnection {
 
 		try {
 			writeBufferQueue.getQueue().offer(byteBuffer);
+			enableWriteEvent();
 		} catch (Exception e) {
 			LOGGER.warn("connection write buffer to buffer-queue error", e);
 		}
 	}
 
 	@Override
-	public void writeFromQueue() throws IOException {
+	public void writeByEvent() throws IOException {
+		try {
+			if (!doWrite() && writeBufferQueue.getQueue().isEmpty()) {
+				disableWriteEvent();
+			}
+		} finally {
+
+		}
+	}
+
+	private void disableWriteEvent() throws IOException {
+		final Lock lock = reactorLock;
+		lock.lock();
+		try {
+			int interestOps = selectionKey.interestOps() & ~SelectionKey.OP_WRITE;
+			socketChannel.register(reactor.getSelector(), interestOps, this);
+			reactor.getSelector().wakeup();
+		} finally {
+			lock.unlock();
+		}
+	}
+
+	private void enableWriteEvent() throws IOException {
+		final Lock lock = reactorLock;
+		lock.lock();
+		try {
+			int interestOps = selectionKey.interestOps() & SelectionKey.OP_WRITE;
+			socketChannel.register(reactor.getSelector(), interestOps, this);
+			reactor.getSelector().wakeup();
+		} finally {
+			lock.unlock();
+		}
+	}
+
+	private boolean doWrite() throws IOException {
 		lastWriteTime = System.currentTimeMillis();
 
 		// 先写上次遗留的数据
@@ -199,7 +246,7 @@ public abstract class AbstractNioConnection implements NioConnection {
 		if (buffer != null) {
 			socketChannel.write(buffer);
 			if (buffer.hasRemaining()) {
-				return;
+				return true;
 			}
 			writeBufferQueue.setLeft(null);
 			recycle(buffer);
@@ -207,14 +254,14 @@ public abstract class AbstractNioConnection implements NioConnection {
 
 		buffer = writeBufferQueue.getQueue().poll();
 		if (buffer == null) {
-			return;
+			return false;
 		}
 
 		if (buffer.position() == 0) {
 			// 没有数据的buffer
 			close();
 			recycle(buffer);
-			return;
+			return false;
 		}
 
 		buffer.flip();
@@ -222,9 +269,12 @@ public abstract class AbstractNioConnection implements NioConnection {
 		// 没有写完, 下次再写
 		if (buffer.hasRemaining()) {
 			writeBufferQueue.setLeft(buffer);
+			return true;
 		} else {
 			recycle(buffer);
 		}
+
+		return false;
 	}
 
 	private ByteBuffer adjustReadBuffer(ByteBuffer buffer, int offset) {
@@ -318,7 +368,6 @@ public abstract class AbstractNioConnection implements NioConnection {
 		} finally {
 			lock.unlock();
 		}
-
 	}
 
 	abstract public boolean isIdleConnection();

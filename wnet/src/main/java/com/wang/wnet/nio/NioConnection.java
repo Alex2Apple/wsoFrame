@@ -31,11 +31,11 @@ public interface NioConnection {
 	void write(ByteBuffer byteBuffer);
 
 	/**
-	 * 从队列写入数据到channel
+	 * 可写事件就绪时写入数据
 	 * 
 	 * @throws IOException
 	 */
-	void writeFromQueue() throws IOException;
+	void writeByEvent() throws IOException;
 
 	/**
 	 * @return

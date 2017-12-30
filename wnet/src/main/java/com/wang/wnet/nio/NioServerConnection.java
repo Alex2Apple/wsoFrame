@@ -2,9 +2,6 @@ package com.wang.wnet.nio;
 
 import java.nio.channels.SocketChannel;
 
-import com.wang.wnet.factory.PacketFactory;
-import com.wang.wnet.handler.NioHandler;
-
 /**
  * @author wangju
  *
