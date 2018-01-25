@@ -31,12 +31,10 @@ public class RegistryNode implements RegistryService {
 	protected static final Logger LOGGER = Logger.getLogger(RegistryCluster.class);
 	private Map<String, HealthRecord> failRecord = new ConcurrentHashMap<>();
 
-	@SuppressWarnings("unused")
 	private final String BATCH_REGISTRY_MAPPING = "/registry/batch";
 	private final String SINGLE_REGISTRY_MAPPING = "/registry";
 	private final String SINGLE_UNREGISTRY_MAPPING = "/unregistry";
 	private final String REGISTRY_HEARTBEAT_MAPPING = "/registry/heartbeat";
-	@SuppressWarnings("unused")
 	private final String BATCH_SUBSCRIBE_MAPPING = "/subscribe/batch";
 	private final String SINGLE_SUBSCRIBE_MAPPING = "/subscribe";
 	private final String SINGLE_UNSUBSCRIBE_MAPPING = "/unsubscribe";
@@ -210,12 +208,10 @@ public class RegistryNode implements RegistryService {
 
 		private boolean updated;
 
-		@SuppressWarnings("unused")
 		public String getLastTime() {
 			return lastTime;
 		}
 
-		@SuppressWarnings("unused")
 		public void setLastTime(String lastTime) {
 			this.lastTime = lastTime;
 		}
@@ -224,7 +220,6 @@ public class RegistryNode implements RegistryService {
 			return location;
 		}
 
-		@SuppressWarnings("unused")
 		public void setLocation(String location) {
 			this.location = location;
 		}
@@ -233,7 +228,6 @@ public class RegistryNode implements RegistryService {
 			return updated;
 		}
 
-		@SuppressWarnings("unused")
 		public void setUpdated(boolean updated) {
 			this.updated = updated;
 		}
