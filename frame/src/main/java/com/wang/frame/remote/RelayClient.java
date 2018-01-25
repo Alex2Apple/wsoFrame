@@ -24,7 +24,7 @@ public class RelayClient implements Relay {
 		client.send(url);
 	}
 
-	public Object receive(URL url) {
+	public Object receive(URL url) throws InterruptedException {
 		long timeout = TimeUnit.MICROSECONDS.convert(Integer.valueOf(url.getParameters().get("timeout").toString()),
 				TimeUnit.SECONDS);
 		return client.receive(url, timeout);

@@ -12,7 +12,7 @@ public interface Client {
 
 	void send(URL url);
 
-	Object receive(URL url, long timeout);
+	Object receive(URL url, long timeout) throws InterruptedException;
 
 	void disconnect();
 }

@@ -1,28 +1,30 @@
 package com.wang.frame.remote;
 
+import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicLong;
+
+import org.apache.log4j.Logger;
 
 import com.alibaba.fastjson.JSON;
 import com.wang.frame.model.URL;
 import com.wang.net.ConnectorStartUp;
+import com.wang.net.nio.NioConnection;
 
 /**
  * @author wangju
  *
  */
 public class DefaultClient implements Client {
+	private static final Logger LOGGER = Logger.getLogger(DefaultClient.class);
 
 	private static final Map<String, ConnectionMetaData> response = new ConcurrentHashMap<>();
 	private static final AtomicLong requestIds = new AtomicLong(System.currentTimeMillis());
@@ -54,8 +56,13 @@ public class DefaultClient implements Client {
 	public void connect(URL url) {
 		requestId = String.valueOf(requestIds.incrementAndGet());
 		response.put(requestId, new ConnectionMetaData());
-		ConnectorStartUp.getInstance.createWorkerGroup("").addHandlerAtLast(new DefaultClientHandler(response));
-		con = ConnectorStartUp.connect(url.getHost(), url.getPort());
+        ConnectorStartUp connectorStartUp = ConnectorStartUp.getInstance();
+		connectorStartUp.createWorkerGroup("").addHandlerAtLast(new DefaultClientHandler(response));
+		try {
+			con = connectorStartUp.connect(url.getHost(), url.getPort());
+		} catch (IOException e) {
+			LOGGER.error(String.format("connect %s:%s error", url.getHost(), url.getPort()), e);
+		}
 		con.setRequestId(requestId);
 	}
 
@@ -69,7 +76,7 @@ public class DefaultClient implements Client {
 	}
 
 	@Override
-	public Object receive(URL url, long timeout) {
+	public Object receive(URL url, long timeout) throws InterruptedException {
 		return response.get(requestId).getQueue().poll(timeout, TimeUnit.MICROSECONDS);
 	}
 

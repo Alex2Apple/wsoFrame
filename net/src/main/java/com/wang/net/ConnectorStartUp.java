@@ -32,7 +32,7 @@ public class ConnectorStartUp {
 
 	}
 
-	public ConnectorStartUp getInstance() {
+	public static ConnectorStartUp getInstance() {
 		return instance;
 	}
 
